@@ -2,8 +2,10 @@ package interfaces
 
 import (
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -16,12 +18,27 @@ import (
 
 func configureRouter(repos *repos.Repos, services *services.Services) http.Handler {
 	baseRouter := mux.NewRouter().StrictSlash(true)
+	protectedRouter := baseRouter.PathPrefix("/in").Subrouter()
+
+	csrfMiddleware := csrf.Protect(
+		[]byte(os.Getenv("SECRET_KEY")),
+		// set Secure true only for production
+		csrf.Secure(false),
+		// use * only for development purpose
+		csrf.TrustedOrigins([]string{"*"}),
+		// instruct the browser to never send cookies during cross site requests
+		// csrf.SameSite(csrf.SameSiteStrictMode),
+	)
+
+	protectedRouter.Use(csrfMiddleware)
+
+	baseRouter.HandleFunc("/csrf", app_handlers.Index).Methods("GET")
 
 	authInterector := usecases.NewAuthInteractor(repos.User, services.Email)
 	app_handlers.ConfigureAuthHandler(authInterector, baseRouter)
 
 	userInterector := usecases.NewUserInteractor(repos.User)
-	app_handlers.ConfigureUserHandler(userInterector, baseRouter)
+	app_handlers.ConfigureUserHandler(userInterector, protectedRouter)
 
 	return baseRouter
 }

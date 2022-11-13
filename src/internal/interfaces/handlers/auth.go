@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kallabs/sso-api/src/internal/app"
@@ -100,6 +101,15 @@ func (i *authHanlder) Login() http.HandlerFunc {
 		}
 
 		token := utils.NewToken(user.Id)
+
+		cookie := http.Cookie{
+			Name:     "_sso_token",
+			Value:    token,
+			Expires:  time.Now().Add(24 * time.Hour),
+			Domain:   "localhost",
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
 
 		utils.SendJson(w, map[string]string{"token": token}, http.StatusOK)
 	}
