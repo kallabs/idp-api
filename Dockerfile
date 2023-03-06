@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine3.14 as debug
+FROM golang:1.20-alpine3.17 as debug
 
 RUN apk update && apk upgrade && \
     apk add --no-cache git dpkg gcc musl-dev

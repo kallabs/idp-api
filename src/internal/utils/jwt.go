@@ -3,29 +3,27 @@ package utils
 import (
 	"errors"
 	"log"
-	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/kallabs/sso-api/src/internal/app/valueobject"
 )
 
-var hmacSecret []byte = []byte(os.Getenv("SECRET_KEY"))
+type TokenType uint8
+
+const (
+	TypeAccess TokenType = iota
+	TypeRefresh
+)
 
 type TokenClaims struct {
 	jwt.RegisteredClaims
-	Uid *valueobject.ID `json:"uid"`
+	Uid  *valueobject.ID `json:"uid"`
+	Type TokenType       `json:"type"`
 }
 
-func NewToken(userId *valueobject.ID) string {
-	claims := TokenClaims{
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
-			Issuer:    "sso.kallabs.by",
-			Audience:  jwt.ClaimStrings{"kallabs.by", "lst.kallabs.by"},
-		},
-		userId,
-	}
+func newToken(userId *valueobject.ID, claims *TokenClaims) string {
+	hmacSecret := []byte(Conf.SecretKey)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(hmacSecret)
@@ -33,7 +31,37 @@ func NewToken(userId *valueobject.ID) string {
 		log.Fatal(err)
 	}
 
+	log.Print(hmacSecret)
+
 	return tokenString
+}
+
+func NewAccessToken(userId *valueobject.ID) string {
+	claims := &TokenClaims{
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(Conf.Jwt.AccessLifetime) * time.Minute)),
+			Issuer:    Conf.Jwt.Issuer,
+			Audience:  jwt.ClaimStrings(Conf.Jwt.Audience),
+		},
+		userId,
+		TypeAccess,
+	}
+
+	return newToken(userId, claims)
+}
+
+func NewRefreshToken(userId *valueobject.ID) string {
+	claims := &TokenClaims{
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(Conf.Jwt.RefreshLifetime) * time.Minute)),
+			Issuer:    Conf.Jwt.Issuer,
+			Audience:  jwt.ClaimStrings(Conf.Jwt.Audience),
+		},
+		userId,
+		TypeRefresh,
+	}
+
+	return newToken(userId, claims)
 }
 
 func GetTokenClaims(tokenString string) (*TokenClaims, error) {
@@ -42,7 +70,7 @@ func GetTokenClaims(tokenString string) (*TokenClaims, error) {
 			return nil, errors.New("unexpected signing method")
 		}
 
-		return hmacSecret, nil
+		return []byte(Conf.SecretKey), nil
 	})
 
 	if claims, ok := token.Claims.(*TokenClaims); ok && token.Valid {

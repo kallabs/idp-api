@@ -30,9 +30,6 @@ func ConfigureUserHandler(ui UserInteractor, r *mux.Router) {
 
 	h.router.HandleFunc("/me", h.Get()).Methods("GET")
 	h.router.HandleFunc("/users/{username:[a-zA-Z0..9]+}", h.FindByUsername()).Methods("GET")
-	// h.router.HandleFunc("/me/group", h.ListGroups()).Methods("GET")
-	// h.router.HandleFunc("/me/group/{groupId}/slice", h.CreateSlice()).Methods("POST")
-	// h.router.HandleFunc("/me/group/{groupId}/slice", h.ListSlices()).Methods("GET")
 }
 
 func (i *userHandler) Get() http.HandlerFunc {

@@ -13,6 +13,7 @@ import (
 	"github.com/kallabs/sso-api/src/internal/interfaces"
 	"github.com/kallabs/sso-api/src/internal/interfaces/repos"
 	"github.com/kallabs/sso-api/src/internal/interfaces/services"
+	"github.com/kallabs/sso-api/src/internal/utils"
 )
 
 func init() {
@@ -20,27 +21,23 @@ func init() {
 }
 
 func main() {
-	dataSourceName := fmt.Sprintf(
-		"%s:%s@(%s:%s)/%s?parseTime=true",
-		os.Getenv("MARIADB_USER"),
-		os.Getenv("MARIADB_PASSWORD"),
-		os.Getenv("MARIADB_HOST"),
-		os.Getenv("MARIADB_PORT"),
-		os.Getenv("MARIADB_DATABASE"),
-	)
+	err := utils.LoadConfig()
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
 
-	db, err := infra.NewMariaDB(dataSourceName)
+	db, err := infra.NewMariaDB(utils.Conf.DatabaseUri)
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
 	repos := repos.NewRepos(db)
-	serverAddress := fmt.Sprintf("%s:%s", os.Getenv("API_HOST"), os.Getenv("API_PORT"))
-	fmt.Printf("User API server listening %s\n", serverAddress)
+	fmt.Printf("User API server listening %s\n", utils.Conf.ServerAddress)
 
 	services := services.NewServices(repos)
 
-	srv, err := interfaces.NewHTTPServer(serverAddress, repos, services)
+	srv, err := interfaces.NewHTTPServer(utils.Conf.ServerAddress, repos, services)
 
 	if err != nil {
 		log.Fatal(err)
