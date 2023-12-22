@@ -3,9 +3,9 @@ package repos
 import (
 	"log"
 
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
-	"github.com/kallabs/sso-api/src/internal/interfaces/db"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/internal/interfaces/db"
 )
 
 type UserRepo struct {
@@ -40,7 +40,7 @@ func (r *UserRepo) Create(obj app.User) (*app.User, error) {
 }
 
 func (r *UserRepo) Get(userId *valueobject.ID) (*app.User, error) {
-	stmt := `SELECT * FROM users WHERE id=?`
+	stmt := `SELECT * FROM users WHERE id=$1`
 	user := &app.User{}
 
 	if err := r.db.Db().Get(user, stmt, userId); err != nil {
@@ -52,7 +52,7 @@ func (r *UserRepo) Get(userId *valueobject.ID) (*app.User, error) {
 }
 
 func (r *UserRepo) FindByEmail(email valueobject.EmailAddress) (*app.User, error) {
-	stmt := `SELECT * FROM users WHERE email=?`
+	stmt := `SELECT * FROM users WHERE email=$1`
 	user := &app.User{}
 
 	if err := r.db.Db().Get(user, stmt, email); err != nil {
@@ -64,7 +64,7 @@ func (r *UserRepo) FindByEmail(email valueobject.EmailAddress) (*app.User, error
 }
 
 func (r *UserRepo) FindByUsername(username string) (*app.User, error) {
-	query := `SELECT * FROM users WHERE username=?`
+	query := `SELECT * FROM users WHERE username=$1`
 	user := &app.User{}
 
 	if err := r.db.Db().Get(user, query, username); err != nil {
@@ -78,7 +78,7 @@ func (r *UserRepo) FindByUsername(username string) (*app.User, error) {
 func (r *UserRepo) FindByToken(token string) (*app.User, error) {
 	stmt := `
 		SELECT * FROM users 
-		WHERE token=? AND token_expires_at > NOW() AND status=?`
+		WHERE token=$1 AND token_expires_at > CURRENT_TIMESTAMP AND status=$2`
 	user := &app.User{}
 
 	if err := r.db.Db().Get(user, stmt, token, app.UserUnconfirmed); err != nil {
@@ -90,7 +90,7 @@ func (r *UserRepo) FindByToken(token string) (*app.User, error) {
 }
 
 func (r *UserRepo) Delete(userId *valueobject.ID) error {
-	stmt := `UPDATE users SET status=? WHERE id=?`
+	stmt := `UPDATE users SET status=$1 WHERE id=$2`
 
 	if _, err := r.db.Db().Exec(stmt, app.UserDeleted, userId); err != nil {
 		log.Println(err)

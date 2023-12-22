@@ -3,8 +3,8 @@ package usecases
 import (
 	"log"
 
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
 )
 
 type UserInteractor struct {

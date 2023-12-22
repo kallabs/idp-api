@@ -3,7 +3,7 @@ package utils
 import (
 	"net/http"
 
-	"github.com/kallabs/sso-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app"
 )
 
 func LoggedInUser(r *http.Request) *app.User {

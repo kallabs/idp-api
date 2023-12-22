@@ -1,7 +1,7 @@
 package email
 
 import (
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
 )
 
 func (s *EmailService) SendSignup(email valueobject.EmailAddress, token string) error {

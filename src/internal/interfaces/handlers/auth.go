@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/app/usecases"
-	"github.com/kallabs/sso-api/src/internal/utils"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app/usecases"
+	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
 type AuthInteractor interface {

@@ -9,11 +9,11 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
-	"github.com/kallabs/sso-api/src/internal/app/usecases"
-	app_handlers "github.com/kallabs/sso-api/src/internal/interfaces/handlers"
-	"github.com/kallabs/sso-api/src/internal/interfaces/middlewares"
-	"github.com/kallabs/sso-api/src/internal/interfaces/repos"
-	"github.com/kallabs/sso-api/src/internal/interfaces/services"
+	"github.com/kallabs/idp-api/src/internal/app/usecases"
+	app_handlers "github.com/kallabs/idp-api/src/internal/interfaces/handlers"
+	"github.com/kallabs/idp-api/src/internal/interfaces/middlewares"
+	"github.com/kallabs/idp-api/src/internal/interfaces/repos"
+	"github.com/kallabs/idp-api/src/internal/interfaces/services"
 )
 
 func configureRouter(repos *repos.Repos, services *services.Services) http.Handler {

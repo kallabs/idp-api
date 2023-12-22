@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine3.17 as debug
+FROM golang:1.21.5-alpine3.18 as debug
 
 RUN apk update && apk upgrade && \
     apk add --no-cache git dpkg gcc musl-dev
@@ -20,7 +20,7 @@ COPY ./dlv.sh /
 RUN chmod +x /dlv.sh
 ENTRYPOINT [ "/dlv.sh" ]
 
-FROM alpine:3.14 as prod
+FROM alpine:3.18 as prod
 
 RUN apk --update add postgresql-client
 

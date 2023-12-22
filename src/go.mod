@@ -1,6 +1,6 @@
-module github.com/kallabs/sso-api/src
+module github.com/kallabs/idp-api/src
 
-go 1.20
+go 1.21
 
 require golang.org/x/crypto v0.6.0
 

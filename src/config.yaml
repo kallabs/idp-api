@@ -1,10 +1,11 @@
 server_address: 0.0.0.0:5500 # SERVER_ADDRESS
 jwt:
-  algorithm: HS256
-  issuer: sso.kallabs.by
+  algorithm: RS256
+  issuer: idp.kallabs.by
   audience: 
     - kallabs.by
     - lst.kallabs.by
+    - rp.kallabs.by
   # Access token lifetime in minutes
   access_lifetime: 1440
   # Refresh token lifetime in minutes

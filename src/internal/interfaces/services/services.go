@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/kallabs/sso-api/src/internal/app/services"
-	"github.com/kallabs/sso-api/src/internal/interfaces/repos"
-	"github.com/kallabs/sso-api/src/internal/interfaces/services/email"
+	"github.com/kallabs/idp-api/src/internal/app/services"
+	"github.com/kallabs/idp-api/src/internal/interfaces/repos"
+	"github.com/kallabs/idp-api/src/internal/interfaces/services/email"
 )
 
 type Services struct {

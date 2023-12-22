@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/utils"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
 func CurrentUser(ur app.UserRepo) func(http.Handler) http.Handler {

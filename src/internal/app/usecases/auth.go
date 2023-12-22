@@ -5,10 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/app/services"
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
-	"github.com/kallabs/sso-api/src/pkg"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app/services"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/pkg"
 )
 
 const tokenLength = 32

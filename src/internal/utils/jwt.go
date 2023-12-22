@@ -1,12 +1,11 @@
 package utils
 
 import (
-	"errors"
 	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
 )
 
 type TokenType uint8
@@ -23,15 +22,16 @@ type TokenClaims struct {
 }
 
 func newToken(userId *valueobject.ID, claims *TokenClaims) string {
-	hmacSecret := []byte(Conf.SecretKey)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	rsaPrivateKey, _ := jwt.ParseRSAPrivateKeyFromPEM([]byte(Conf.RsaPrivateKey))
+	method := jwt.GetSigningMethod(Conf.Jwt.Algorithm)
+	token := jwt.NewWithClaims(method, claims)
 
-	tokenString, err := token.SignedString(hmacSecret)
+	tokenString, err := token.SignedString(rsaPrivateKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Print(hmacSecret)
+	log.Print(rsaPrivateKey)
 
 	return tokenString
 }
@@ -66,11 +66,7 @@ func NewRefreshToken(userId *valueobject.ID) string {
 
 func GetTokenClaims(tokenString string) (*TokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-
-		return []byte(Conf.SecretKey), nil
+		return jwt.ParseRSAPublicKeyFromPEM([]byte(Conf.RsaPublicKey))
 	})
 
 	if claims, ok := token.Claims.(*TokenClaims); ok && token.Valid {

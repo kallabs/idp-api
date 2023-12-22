@@ -9,11 +9,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/kallabs/sso-api/src/internal/infra"
-	"github.com/kallabs/sso-api/src/internal/interfaces"
-	"github.com/kallabs/sso-api/src/internal/interfaces/repos"
-	"github.com/kallabs/sso-api/src/internal/interfaces/services"
-	"github.com/kallabs/sso-api/src/internal/utils"
+	"github.com/kallabs/idp-api/src/internal/infra"
+	"github.com/kallabs/idp-api/src/internal/interfaces"
+	"github.com/kallabs/idp-api/src/internal/interfaces/repos"
+	"github.com/kallabs/idp-api/src/internal/interfaces/services"
+	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
 func init() {
@@ -27,7 +27,7 @@ func main() {
 		return
 	}
 
-	db, err := infra.NewMariaDB(utils.Conf.DatabaseUri)
+	db, err := infra.NewPostgres(utils.Conf.DatabaseUri)
 	if err != nil {
 		fmt.Print(err)
 		return

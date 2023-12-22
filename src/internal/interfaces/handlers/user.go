@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kallabs/sso-api/src/internal/app"
-	"github.com/kallabs/sso-api/src/internal/app/valueobject"
-	"github.com/kallabs/sso-api/src/internal/utils"
+	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/kallabs/idp-api/src/internal/app/valueobject"
+	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
 type UserInteractor interface {
