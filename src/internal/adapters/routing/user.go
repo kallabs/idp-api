@@ -1,31 +1,25 @@
-package handlers
+package routing
 
 import (
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kallabs/idp-api/src/internal/app"
-	"github.com/kallabs/idp-api/src/internal/app/valueobject"
+	"github.com/jmoiron/sqlx"
+	"github.com/kallabs/idp-api/src/internal/adapters/factory"
 	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
-type UserInteractor interface {
-	Get(*valueobject.ID) (*app.User, error)
-	FindByUsername(string) (*app.User, error)
-}
-
 type userHandler struct {
 	BaseHanlder
-	userInteractor UserInteractor
 }
 
-func ConfigureUserHandler(ui UserInteractor, r *mux.Router) {
+func ConfigureUserHandler(db *sqlx.DB, r *mux.Router) {
 	h := &userHandler{
 		BaseHanlder: BaseHanlder{
+			db:     db,
 			router: r,
 		},
-		userInteractor: ui,
 	}
 
 	h.router.HandleFunc("/me", h.Get()).Methods("GET")
@@ -45,6 +39,8 @@ func (i *userHandler) Get() http.HandlerFunc {
 }
 
 func (i *userHandler) FindByUsername() http.HandlerFunc {
+	get_by_username_service := factory.NewGetUserByUsernameService(i.db)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		username := vars["username"]
@@ -55,7 +51,7 @@ func (i *userHandler) FindByUsername() http.HandlerFunc {
 			return
 		}
 
-		usr, err := i.userInteractor.FindByUsername(username)
+		usr, err := get_by_username_service.Execute(username)
 		if err != nil {
 			utils.SendJsonError(w, err, http.StatusBadRequest)
 			return

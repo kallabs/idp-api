@@ -5,11 +5,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kallabs/idp-api/src/internal/app"
+	"github.com/jmoiron/sqlx"
+	"github.com/kallabs/idp-api/src/internal/adapters/factory"
 	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
-func CurrentUser(ur app.UserRepo) func(http.Handler) http.Handler {
+func CurrentUser(db *sqlx.DB) func(http.Handler) http.Handler {
+	user_gateway := factory.NewUserGateway(db)
+	jwt_gateway := factory.DefaultJwtGateway()
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -19,7 +23,7 @@ func CurrentUser(ur app.UserRepo) func(http.Handler) http.Handler {
 				splitToken := strings.Split(token, "Bearer ")
 				token = splitToken[1]
 
-				claims, err := utils.GetTokenClaims(token)
+				claims, err := jwt_gateway.ParseTokenPayload(token)
 
 				if err != nil {
 					utils.SendJsonError(w, "invalid token", http.StatusUnauthorized)
@@ -27,7 +31,7 @@ func CurrentUser(ur app.UserRepo) func(http.Handler) http.Handler {
 				}
 
 				if claims != nil {
-					user, err := ur.Get(claims.Uid)
+					user, err := user_gateway.GetById(claims.UserId)
 
 					if err == nil {
 						ctx := context.WithValue(r.Context(), "user", user)

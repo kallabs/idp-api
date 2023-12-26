@@ -9,10 +9,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/kallabs/idp-api/src/internal/infra"
-	"github.com/kallabs/idp-api/src/internal/interfaces"
-	"github.com/kallabs/idp-api/src/internal/interfaces/repos"
-	"github.com/kallabs/idp-api/src/internal/interfaces/services"
+	"github.com/kallabs/idp-api/src/internal/adapters"
+	"github.com/kallabs/idp-api/src/internal/adapters/storage"
 	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
@@ -27,17 +25,14 @@ func main() {
 		return
 	}
 
-	db, err := infra.NewPostgres(utils.Conf.DatabaseUri)
+	db, err := storage.ConnectPostgres(utils.Conf.DatabaseUri)
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
-	repos := repos.NewRepos(db)
 	fmt.Printf("User API server listening %s\n", utils.Conf.ServerAddress)
 
-	services := services.NewServices(repos)
-
-	srv, err := interfaces.NewHTTPServer(utils.Conf.ServerAddress, repos, services)
+	srv, err := adapters.NewHTTPServer(utils.Conf.ServerAddress, db)
 
 	if err != nil {
 		log.Fatal(err)

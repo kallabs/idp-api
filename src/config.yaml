@@ -1,4 +1,5 @@
 server_address: 0.0.0.0:5500 # SERVER_ADDRESS
+reg_token_length: 32
 jwt:
   algorithm: RS256
   issuer: idp.kallabs.by

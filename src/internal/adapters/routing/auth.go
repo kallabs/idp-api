@@ -1,4 +1,4 @@
-package handlers
+package routing
 
 import (
 	"encoding/json"
@@ -6,28 +6,22 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/kallabs/idp-api/src/internal/app"
-	"github.com/kallabs/idp-api/src/internal/app/usecases"
+	"github.com/jmoiron/sqlx"
+	"github.com/kallabs/idp-api/src/internal/adapters/factory"
+	value_objects "github.com/kallabs/idp-api/src/internal/domain"
 	"github.com/kallabs/idp-api/src/internal/utils"
 )
 
-type AuthInteractor interface {
-	CreateRegistrant(*usecases.Registrant) (*app.User, error)
-	ConfirmEmail(token string) error
-	FindUserByEmailPassword(email string, password string) (*app.User, error)
-}
-
-type authHanlder struct {
+type authRouter struct {
 	BaseHanlder
-	authInteractor AuthInteractor
 }
 
-func ConfigureAuthHandler(ai AuthInteractor, r *mux.Router) {
-	i := &authHanlder{
+func ConfigureAuthHandler(db *sqlx.DB, r *mux.Router) {
+	i := &authRouter{
 		BaseHanlder: BaseHanlder{
+			db:     db,
 			router: r,
 		},
-		authInteractor: ai,
 	}
 
 	i.router.HandleFunc("/signup", i.Signup()).Methods("POST")
@@ -36,12 +30,14 @@ func ConfigureAuthHandler(ai AuthInteractor, r *mux.Router) {
 	i.router.HandleFunc("/jwt/refresh", i.RefreshJWT()).Methods("POST")
 }
 
-func (i *authHanlder) Signup() http.HandlerFunc {
+func (i *authRouter) Signup() http.HandlerFunc {
 	type request struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
+	create_reg_service := factory.NewCreateRegistrantService(i.db)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var s request
@@ -52,13 +48,9 @@ func (i *authHanlder) Signup() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		registrant := &usecases.Registrant{
-			Username: s.Username,
-			Email:    s.Email,
-			Password: s.Password,
-		}
+		email_addr := value_objects.EmailAddress(s.Email)
 
-		if _, err := i.authInteractor.CreateRegistrant(registrant); err != nil {
+		if _, err := create_reg_service.Execute(email_addr, s.Username, s.Password); err != nil {
 			utils.SendJsonError(w, err, http.StatusBadRequest)
 			return
 		}
@@ -69,11 +61,13 @@ func (i *authHanlder) Signup() http.HandlerFunc {
 	}
 }
 
-func (i *authHanlder) ConfirmSignup() http.HandlerFunc {
+func (i *authRouter) ConfirmSignup() http.HandlerFunc {
+	confirm_email_service := factory.NewConfirmEmailService(i.db)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		if err := i.authInteractor.ConfirmEmail(vars["token"]); err != nil {
+		if err := confirm_email_service.Execute(vars["token"]); err != nil {
 			utils.SendJsonError(w, err, http.StatusBadRequest)
 			return
 		}
@@ -82,11 +76,13 @@ func (i *authHanlder) ConfirmSignup() http.HandlerFunc {
 	}
 }
 
-func (i *authHanlder) CreateJWT() http.HandlerFunc {
+func (i *authRouter) CreateJWT() http.HandlerFunc {
 	type request struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
+	login_service := factory.NewLoginWithEmailPasswordService(i.db)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var s request
@@ -95,30 +91,22 @@ func (i *authHanlder) CreateJWT() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		user, err := i.authInteractor.FindUserByEmailPassword(s.Email, s.Password)
+		auth_payload, err := login_service.Execute(s.Email, s.Password)
 		if err != nil {
 			utils.SendJsonError(w, err, http.StatusBadRequest)
 			return
 		}
 
-		accessToken := utils.NewAccessToken(user.Id)
-		refreshToken := utils.NewRefreshToken(user.Id)
-
-		resData := map[string]string{
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
-		}
-
 		cookieAccessToken := http.Cookie{
 			Name:     "_sso_access_token",
-			Value:    accessToken,
+			Value:    auth_payload.AccessToken,
 			Expires:  time.Now().Add(5 * time.Minute),
 			Domain:   "localhost",
 			HttpOnly: false,
 		}
 		cookieRefreshToken := http.Cookie{
 			Name:     "_sso_refresh_token",
-			Value:    refreshToken,
+			Value:    auth_payload.RefreshToken,
 			Expires:  time.Now().Add(24 * time.Hour),
 			Domain:   "localhost",
 			HttpOnly: true,
@@ -126,14 +114,16 @@ func (i *authHanlder) CreateJWT() http.HandlerFunc {
 		http.SetCookie(w, &cookieAccessToken)
 		http.SetCookie(w, &cookieRefreshToken)
 
-		utils.SendJson(w, resData, http.StatusOK)
+		utils.SendJson(w, auth_payload, http.StatusOK)
 	}
 }
 
-func (i *authHanlder) RefreshJWT() http.HandlerFunc {
+func (i *authRouter) RefreshJWT() http.HandlerFunc {
 	type request struct {
-		RefreshToken string `json:"refreshToken"`
+		RefreshToken string `json:"refresh_token"`
 	}
+
+	refresh_token_service := factory.NewRefreshTokensService()
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var s request
@@ -142,23 +132,12 @@ func (i *authHanlder) RefreshJWT() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		refreshClaims, err := utils.GetTokenClaims(s.RefreshToken)
+		auth_payload, err := refresh_token_service.Execute(s.RefreshToken)
 		if err != nil {
 			utils.SendJsonError(w, err, http.StatusBadRequest)
 			return
 		}
 
-		if refreshClaims.Type != utils.TypeRefresh {
-			utils.SendJsonError(w, err, http.StatusBadRequest)
-			return
-		}
-
-		accessToken := utils.NewAccessToken(refreshClaims.Uid)
-		refreshToken := utils.NewRefreshToken(refreshClaims.Uid)
-
-		utils.SendJson(w, map[string]string{
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
-		}, http.StatusOK)
+		utils.SendJson(w, auth_payload, http.StatusOK)
 	}
 }

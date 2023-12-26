@@ -1,34 +1,14 @@
 package usecases
 
 import (
-	"log"
-
-	"github.com/kallabs/idp-api/src/internal/app"
-	"github.com/kallabs/idp-api/src/internal/app/valueobject"
+	value_objects "github.com/kallabs/idp-api/src/internal/domain"
+	"github.com/kallabs/idp-api/src/internal/domain/entities"
 )
 
-type UserInteractor struct {
-	UserRepo app.UserRepo
+type GetUserInfo interface {
+	Execute(user_id value_objects.ID) (*entities.UserInfo, error)
 }
 
-func NewUserInteractor(ur app.UserRepo) *UserInteractor {
-	return &UserInteractor{ur}
-}
-
-func (i *UserInteractor) Get(userId *valueobject.ID) (*app.User, error) {
-	user, err := i.UserRepo.Get(userId)
-	if err != nil {
-		log.Println(err)
-	}
-
-	return user, nil
-}
-
-func (i *UserInteractor) FindByUsername(username string) (*app.User, error) {
-	user, err := i.UserRepo.FindByUsername(username)
-	if err != nil {
-		log.Println(err)
-	}
-
-	return user, nil
+type GetUserByUsername interface {
+	Execute(string) (*entities.UserInfo, error)
 }

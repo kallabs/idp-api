@@ -1,13 +1,15 @@
-package handlers
+package routing
 
 import (
 	"net/http"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
 type BaseHanlder struct {
+	db     *sqlx.DB
 	router *mux.Router
 }
 

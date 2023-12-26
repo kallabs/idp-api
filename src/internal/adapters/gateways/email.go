@@ -1,4 +1,4 @@
-package email
+package gateways
 
 import (
 	"bytes"
@@ -11,9 +11,9 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type EmailService struct{}
+type EmailGateway struct{}
 
-func (s *EmailService) Send(subject string, from string, recipients []string, body string) error {
+func (s *EmailGateway) Send(subject string, from string, recipients []string, body string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)
 	m.SetHeader("To", recipients...)
@@ -44,7 +44,7 @@ func (s *EmailService) Send(subject string, from string, recipients []string, bo
 	return nil
 }
 
-func (s *EmailService) SendWithView(subject string, from string, recipients []string, views []string, layout string, data interface{}) error {
+func (s *EmailGateway) SendWithView(subject string, from string, recipients []string, views []string, layout string, data interface{}) error {
 	t, err := template.ParseFiles(views...)
 	if err != nil {
 		log.Fatal(err)

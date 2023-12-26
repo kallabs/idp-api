@@ -9,12 +9,14 @@ import (
 )
 
 type AppConfig struct {
-	ServerAddress string `yaml:"server_address" envconfig:"SERVER_ADDRESS"`
-	SecretKey     string `yaml:"secret_key" envconfig:"SECRET_KEY"`
-	RsaPublicKey  string `yaml:"rsa_public_key" envconfig:"RSA_PUBLIC_KEY"`
-	RsaPrivateKey string `yaml:"rsa_private_key" envconfig:"RSA_PRIVATE_KEY"`
-	DatabaseUri   string `yaml:"database_uri" envconfig:"DATABASE_URI"`
-	Jwt           struct {
+	ServerAddress  string `yaml:"server_address" envconfig:"SERVER_ADDRESS"`
+	SecretKey      string `yaml:"secret_key" envconfig:"SECRET_KEY"`
+	RsaPublicKey   string `yaml:"rsa_public_key" envconfig:"RSA_PUBLIC_KEY"`
+	RsaPrivateKey  string `yaml:"rsa_private_key" envconfig:"RSA_PRIVATE_KEY"`
+	DatabaseUri    string `yaml:"database_uri" envconfig:"DATABASE_URI"`
+	RegTokenLength int    `yaml:"reg_token_length"`
+
+	Jwt struct {
 		Algorithm       string   `yaml:"algorithm"`
 		Issuer          string   `yaml:"issuer"`
 		Audience        []string `yaml:"audience"`

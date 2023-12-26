@@ -1,79 +1,37 @@
 package usecases
 
 import (
-	"errors"
-	"log"
-	"time"
-
-	"github.com/kallabs/idp-api/src/internal/app"
-	"github.com/kallabs/idp-api/src/internal/app/services"
-	"github.com/kallabs/idp-api/src/internal/app/valueobject"
-	"github.com/kallabs/idp-api/src/pkg"
+	value_objects "github.com/kallabs/idp-api/src/internal/domain"
+	"github.com/kallabs/idp-api/src/internal/domain/entities"
 )
 
-const tokenLength = 32
-
-type Registrant struct {
-	Username string
-	Email    string
-	Password string
+type NewTokensGateway interface {
+	NewAccessToken(user_id value_objects.ID) string
+	NewRefreshToken(user_id value_objects.ID) string
 }
 
-type AuthInteractor struct {
-	UserRepo     app.UserRepo
-	EmailService services.EmailService
+type RefreshTokensGateway interface {
+	ParseTokenPayload(string) (*entities.TokenPayload, error)
+	NewAccessToken(user_id value_objects.ID) string
+	NewRefreshToken(user_id value_objects.ID) string
 }
 
-func NewAuthInteractor(ur app.UserRepo, es services.EmailService) *AuthInteractor {
-	return &AuthInteractor{ur, es}
+type CreateRegistrant interface {
+	Execute(email value_objects.EmailAddress, username string, password string) (*entities.User, error)
 }
 
-func (i *AuthInteractor) CreateRegistrant(r *Registrant) (*app.User, error) {
-	inRegistrant := app.User{
-		Email:          valueobject.EmailAddress(r.Email),
-		Username:       r.Username,
-		Token:          pkg.RandomString(tokenLength),
-		Status:         app.UserUnconfirmed,
-		TokenExpiresAt: time.Now().Add(12 * time.Hour).UTC(),
-	}
-	inRegistrant.SetPassword(r.Password)
-
-	registrant, err := i.UserRepo.Create(inRegistrant)
-	if err != nil {
-		return nil, err
-	}
-
-	go i.EmailService.SendSignup(registrant.Email, registrant.Token)
-
-	return registrant, nil
+type ConfirmEmail interface {
+	Execute(token string) error
 }
 
-func (i *AuthInteractor) ConfirmEmail(token string) error {
-	registrant, err := i.UserRepo.FindByToken(token)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	registrant.Status = app.UserActive
-
-	if err := i.UserRepo.Update(*registrant); err != nil {
-		log.Println(err)
-		return err
-	}
-
-	return nil
+type GenerateTokens interface {
+	Execute(user_id value_objects.ID) (*entities.AuthPayload, error)
 }
 
-func (i *AuthInteractor) FindUserByEmailPassword(email string, password string) (*app.User, error) {
-	user, err := i.UserRepo.FindByEmail(valueobject.EmailAddress(email))
-	if err != nil {
-		return nil, err
-	}
+type RefreshTokens interface {
+	Execute(refresh_token string) (*entities.AuthPayload, error)
+}
 
-	if !user.CheckPassword(password) {
-		return nil, errors.New("incorrect password")
-	}
-
-	return user, nil
+type LoginWithEmailPassword interface {
+	Execute(email string, password string) (*entities.AuthPayload, error)
 }
